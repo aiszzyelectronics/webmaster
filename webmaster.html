@@ -1,0 +1,20 @@
+<script src="https://blocklypro.webduino.io/components/jquery/dist/jquery.min.js"></script>
+<script src="https://blocklypro.webduino.io/dist/lib/webduino-all-0.4.20.min.js"></script>
+<script src="https://blocklypro.webduino.io/dist/webduino-blockly.min.js"></script>
+<script src="https://blocklypro.webduino.io/dist/lib/firebase.min.js"></script>
+<script src="https://blocklypro.webduino.io/dist/lib/runtime.min.js"></script>
+<script src="https://blocklypro.webduino.io/node_modules/webduino-module-mqtt/mqttClient.min.js"></script>  
+<script id="jsbin-javascript">
+(async function () {
+var topic = "my/helloworld";
+var webduinoMQTTClient = new webduino.module.mqttClient();
+await webduinoMQTTClient.connect({ server: 'wss://mqtt1.webduino.io/mqtt' });
+await webduinoMQTTClient.subscribe(topic);
+var strUrl=location.search;
+if (strUrl.indexOf("?")!=-1) {
+  webduinoMQTTClient.send({topic: topic,message: strUrl.split("?")[1]});
+  document.write(strUrl.split("?")[1]);
+  window.close();
+}  
+}());
+</script>	  

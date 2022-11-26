@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta http-equiv="Access-Control-Allow-Headers" content="Origin, X-Requested-With, Content-Type, Accept">
+        <meta http-equiv="Access-Control-Allow-Methods" content="GET,POST,PUT,DELETE,OPTIONS">
+        <meta http-equiv="Access-Control-Allow-Origin" content="*">
+        <title>Webbit MQTT</title>
+        <script src="https://blocklypro.webduino.io/components/jquery/dist/jquery.min.js"></script>
+        <script src="https://blocklypro.webduino.io/dist/lib/webduino-all-0.4.20.min.js"></script>
+        <script src="https://blocklypro.webduino.io/dist/webduino-blockly.min.js"></script>
+        <script src="https://blocklypro.webduino.io/dist/lib/firebase.min.js"></script>
+        <script src="https://blocklypro.webduino.io/dist/lib/runtime.min.js"></script>
+        <script src="https://blocklypro.webduino.io/node_modules/webduino-module-mqtt/mqttClient.min.js"></script>
+        <style>
+          input {
+            border:1px black solid;
+            border-radius: 3px; 
+            cursor:pointer;
+          }          
+        </style>
+    </head>
+    <body>
+    <font color="green" size="6">Webduino MQTT</font>
+    <br><br>
+    <table>	    
+      <tr><td>Send-Topic:</td><td><input type="text" id="sendTopic"></td></tr>
+      <tr><td>Message:</td><td><input type="text" id="message"></td></tr>
+      <tr><td></td><td><input type="button" value="Send" onclick="sendMessage();"></td></tr> 
+      <tr><td></td><td>&nbsp;</td></tr>            
+      <tr><td>Get-Topic:</td><td><input type="text" id="getTopic"></td></tr>  
+      <tr><td>Message:</td><td><input type="checkbox" id="clear" checked>Clear last message</td></tr>
+      <tr><td></td><td>&nbsp;</td></tr> 	    
+      <tr><td>User ID:</td><td><input type="text" id="ID" size="17"><input type="checkbox" id="chkid" checked></td></tr>	    
+    </table>
+    <div id="receive" style="color:red;"></div>
+    <script>
+      var webduinoBroadcastor;
+      var sendTopic = document.getElementById('sendTopic');
+      var message = document.getElementById('message');
+	  var msg = "";
+      var getTopic = document.getElementById('getTopic');
+      var clear = document.getElementById('clear');
+	  var ID = document.getElementById('ID');
+	  var chkid = document.getElementById('chkid');
+
+      (async function () {      
+        if (!webduinoBroadcastor) {
+          webduinoBroadcastor = new webduino.module.mqttClient();
+          await webduinoBroadcastor.connect({ server: 'wss://mqtt1.webduino.io/mqtt' });  
+        }
+      }());
+
+      async function sendMessage() {
+        if (sendTopic.value==""||message.value=="") {
+          if (clear.checked)
+            receive.innerHTML = "Please input Send-Topic and Message.";
+          else
+            receive.innerHTML = "Please input Send-Topic and Message." + "<br>" + receive.innerHTML;  
+          return; 
+        }
+        if (clear.checked) receive.innerHTML = "";
+		
+		if (chkid.checked&&ID.value!="")
+			msg = "[" + ID.value + "] " + message.value;
+		else
+			msg = message.value;
+        if (webduinoBroadcastor) {
+          webduinoBroadcastor.send({topic: sendTopic.value, message: msg});
+          message.value="";
+        } else {
+          receive.innerHTML = "Connected to server failed.";
+        }
+      }  
+      
+      setInterval(async function () {       
+        if (getTopic.value=="") {
+          return; 
+        }
+        if (webduinoBroadcastor) {        
+          await webduinoBroadcastor.onMessage(getTopic.value, async (message) => {
+            //console.log(message);
+            if (clear.checked) 
+              receive.innerHTML = message;
+            else
+              receive.innerHTML = message + "<br>" + receive.innerHTML;
+          });
+        } else {
+          receive.innerHTML = "Connected to server failed.";
+        }          
+      }, 100);        
+    </script>      
+    </body>
+</html>
